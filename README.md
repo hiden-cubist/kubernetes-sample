@@ -107,3 +107,74 @@ subjects:
 
 - https://github.com/docker/for-mac/issues/4774
 - https://qiita.com/paper2/items/1cd3d6cf53cb2d085a60
+
+## rbac
+
+ユーザ作成と認証・認可
+
+### ユーザ作成
+
+```
+# 秘密鍵作成
+> openssl genrsa -out test-user.key 2048
+
+# 証明書署名リクエスト作成
+> openssl req -new -key test-user.key -out test-user.csr
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:test-group
+Common Name (e.g. server FQDN or YOUR name) []:test-user
+
+# base64エンコード
+# certificate-signing-request.yamlのspec.requestを、以下で出力された値に置き換える
+> cat test-user.csr | base64 | tr -d "\n"
+
+# デプロイ
+> kubectl apply -f certificate-signing-request.yaml
+
+# 確認
+> kubectl get csr
+NAME        AGE   SIGNERNAME                            REQUESTOR            CONDITION
+test-user   28s   kubernetes.io/kube-apiserver-client   docker-for-desktop   Pending
+
+# 承認
+> kubectl certificate approve test-user
+
+# 確認
+> kubectl get csr
+NAME        AGE   SIGNERNAME                            REQUESTOR            CONDITION
+test-user   94s   kubernetes.io/kube-apiserver-client   docker-for-desktop   Approved,Issued
+
+# 証明書取得
+> kubectl get csr test-user -o jsonpath='{.status.certificate}'| base64 -d > test-user.crt
+
+# 資格情報のセット
+> kubectl config set-credentials test-user --client-key=test-user.key --client-certificate=test-user.crt --embed-certs=true
+
+# コンテキスト作成
+> kubectl config set-context test-user --cluster=docker-desktop --user=test-user
+
+# コンテキスト切り替え
+> kubectl config use-context test-user
+
+# 確認
+# 認可設定をしていないのでpodへのアクセス権限がない
+> kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "test-user" cannot list resource "pods" in API group "" in the namespace "default"
+```
+
+- https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
+
+### 認証・認可
+
+```
+# test-userにpodの読み取り権限の付与
+> kubectl config use-context docker-desktop
+> k apply -f rbac/role.yaml
+> k apply -f rbac/role-binding.yaml
+
+# 確認
+> kubectl config use-context test-user
+> kubectl get pods
+No resources found in default namespace.
+```
+
+- https://kubernetes.io/ja/docs/reference/access-authn-authz/rbac/
