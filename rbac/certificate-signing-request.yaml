@@ -3,7 +3,7 @@ kind: CertificateSigningRequest
 metadata:
   name: test-user
 spec:
-  request: {{replace your csr}}
+  request: <<replace your csr>>
   signerName: kubernetes.io/kube-apiserver-client
   usages:
-  - client auth
+    - client auth

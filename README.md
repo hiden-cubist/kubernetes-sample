@@ -1,14 +1,14 @@
 # kubernetes sample
 
-以下docker-desktop for windowsで動かす場合を想定
+以下 docker-desktop for windows で動かす場合を想定
 
 ## hello-world
 
-deployment/service/ingressのサンプル
+deployment/service/ingress のサンプル
 
-### ingress controllerデプロイ
+### ingress controller デプロイ
 
-ingressの動作に必要
+ingress の動作に必要
 
 ```
 > kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/cloud/deploy.yaml
@@ -25,9 +25,9 @@ ingressの動作に必要
 Hello Kubernetes!
 ```
 
-## kubernetes dashboard導入
+## kubernetes dashboard 導入
 
-### dashboardデプロイ
+### dashboard デプロイ
 
 ```
 > kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
@@ -36,15 +36,15 @@ Hello Kubernetes!
 - https://kubernetes.io/ja/docs/tasks/access-application-cluster/web-ui-dashboard/
 - https://github.com/kubernetes/dashboard
 
-### metrics serverデプロイ
+### metrics server デプロイ
 
-dashboardでcpuやメモリの使用率が表示されるようになる。（kubectl top pod等も動作するようになる）
+dashboard で cpu やメモリの使用率が表示されるようになる。（kubectl top pod 等も動作するようになる）
 
 ```
 > kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
-このままだとtlsのエラーがでてしまう
+このままだと tls のエラーがでてしまう
 
 ```
 > kubectl logs -n kube-system metrics-server-[pod-name]
@@ -52,7 +52,7 @@ dashboardでcpuやメモリの使用率が表示されるようになる。（ku
 x509: cannot validate certificate for 192.168.65.4 because it doesn't contain any IP SANs" node="docker-desktop"
 ```
 
-そこで、deploymentに一行追加する
+そこで、deployment に一行追加する
 
 ```
 > kubectl patch deployment metrics-server -n kube-system --type 'json' -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}]'
@@ -86,7 +86,7 @@ spec:
 http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 ```
 
-ここでtokenを入力する必要があり、本来は新しくcluster-adminロール等を持つservice accountを作成してtokenを取得する必要があるが、docker desktopの場合は、defaultのservice accountにもcluster-adminロールがついている。
+ここで token を入力する必要があり、本来は新しく cluster-admin ロール等を持つ service account を作成して token を取得する必要があるが、docker desktop の場合は、default の service account にも cluster-admin ロールがついている。
 
 ```
 > kubectl get clusterrolebinding docker-for-desktop-binding -o yaml
@@ -98,7 +98,7 @@ subjects:
   namespace: kube-system
 ```
 
-よって、defaultネームスペースのdefault service accountのtokenでもリソース情報の閲覧・変更等が可能。
+よって、default ネームスペースの default service account の token でもリソース情報の閲覧・変更等が可能。
 
 ```
 > kubectl describe secrets
@@ -178,3 +178,16 @@ No resources found in default namespace.
 ```
 
 - https://kubernetes.io/ja/docs/reference/access-authn-authz/rbac/
+
+## Redis を使用した PHP のゲストブックアプリケーション
+
+frontend アプリケーション 3 + redis master 1 + redis slave 2 の冗長構成
+
+### 動作確認
+
+```
+> kubectl apply -f guestbook/
+# localhost:80でアプリケーションが起動する
+```
+
+- https://kubernetes.io/ja/docs/tutorials/stateless-application/guestbook/

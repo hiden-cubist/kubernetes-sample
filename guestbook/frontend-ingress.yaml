@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hello-world
+  name: frontend
 spec:
   rules:
     - http:
         paths:
           - backend:
               service:
-                name: hello-world
+                name: frontend
                 port:
-                  number: 8080
-            path: /hello
+                  number: 80
+            path: /
             pathType: Prefix
